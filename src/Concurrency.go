@@ -21,7 +21,9 @@ func main() {
 	fmt.Println("Operator select(switch for channels) ---->\n")
 	//spam()
 
-	selectForTimer()
+	//selectForTimer()
+
+	bufferChannel()
 
 	var input string
 	fmt.Scanln(&input)
@@ -125,18 +127,45 @@ func selectForTimer() {
 		}
 	}()
 
-	select {
-	case msg1 := <-c1:
-		fmt.Println("Message 1", msg1)
-	case msg2 := <-c2:
-		fmt.Println("Message 1", msg2)
-	//case <-time.After(time.Second):
-		fmt.Println("timeout")
-		default: fmt.Println("default")
-	}
+	go func() {
+		for {
+			select {
+			case msg1 := <-c1:
+				fmt.Println("Message 1", msg1)
+			case msg2 := <-c2:
+				fmt.Println("Message 1", msg2)
+			case <-time.After(time.Second):
+				fmt.Println("timeout")
 
+			}
+		}
+	}()
 
+}
 
+func bufferChannel() {
+	c := make(chan int,1) //buffered channel with capacity of 1,
+	// buffered channels work asynchronously instead of simple channels which works synchronously.
+	// Buffered channel losing his throughput, when he is busy and we send one message to, we can't send new one to it,
+	// while first msg will received
+
+	go func() {
+		for i := 0;; i++ {
+			c <- i
+		}
+	}()
+	go func() {
+		for i := 0;; i++ {
+			c <- i+100
+		}
+	}()
+
+	go func(){
+		for{
+			time.Sleep(time.Second)
+			fmt.Println(<-c)
+		}
+	}()
 }
 
 //endregion
